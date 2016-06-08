@@ -147,8 +147,6 @@ int   main( int argc, char **argv)
          cmd_msg[0] = 1;
          cmd_msg[1] = current_floor;
          cmd_msg[2] = target_floor;
-         printf("current_floor %d\n",current_floor );
-         printf("target_floor %d\n",target_floor );
          break;
       }
       case 2:{ // 시작 일시정지 
