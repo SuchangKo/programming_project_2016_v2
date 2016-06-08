@@ -14,7 +14,7 @@
 #define  UP 1
 #define  DOWN 2
 #define  FLOOR_MAX 10
-#define  FLOOR_MIN 0
+#define  FLOOR_MIN -1
 
 /*
 * Protocol
@@ -110,8 +110,12 @@ int   main( int argc, char **argv)
       case 1:{ // 상하 이동
          int current_floor, target_floor;
          int direction;
-         printf("현재 몇 층에 있나요? (지하1층 -> 0 입력) : ");
+         printf("현재 몇 층에 있나요? (지하1층 -> -1 입력) : ");
          scanf("%d",&current_floor);
+         if(current_floor == 0){
+            printf("0층은 지하 1층으로 자동 변경됩니다.\n");
+            current_floor = -1;
+         }
          printf("올라가기[1] 내려가기[2] : ");
          scanf("%d",&direction);
 
@@ -120,12 +124,14 @@ int   main( int argc, char **argv)
          if(direction == UP){
             if(current_floor == FLOOR_MAX){
                printf("여기가 끝층이야 못올라가\n");
+               break;
             }else{
                target_floor = current_floor + rand()%(FLOOR_MAX - current_floor) + 1;
             }
          }else if(direction == DOWN){
             if(current_floor == FLOOR_MIN){
                printf("여기가 끝층이야 못내려가\n");
+               break;
             }else{
                target_floor = current_floor - rand()%(current_floor - FLOOR_MIN) - 1;
             }
@@ -141,6 +147,8 @@ int   main( int argc, char **argv)
          cmd_msg[0] = 1;
          cmd_msg[1] = current_floor;
          cmd_msg[2] = target_floor;
+         printf("current_floor %d\n",current_floor );
+         printf("target_floor %d\n",target_floor );
          break;
       }
       case 2:{ // 시작 일시정지 

@@ -170,6 +170,8 @@ void worker(elevator *elevator_array[], work_queue* work_queue_ptr){
         }else if(elevator_array[i]->now_work->target_floor < elevator_array[i]->now_work->start_floor){
           direction = -1; //내려감
         }else{
+          direction = 0;
+          printf("elevator_array[i] %d\n",elevator_array[i]->now_floor);
           printf("%d %d\n",elevator_array[i]->now_work->target_floor , elevator_array[i]->now_work->start_floor );
           printf("1Error!!!!\n");
         }
@@ -394,12 +396,17 @@ int main( void)
     if(holdFlag == 0) {
       
       worker(elevator_array,work_queue_ptr);
-      
 
       if(i > 1){
         switch(buff_rcv[0]){
         case 1:{ //move
           printf("[이동] %d층 -> %d층 \n",buff_rcv[1],buff_rcv[2]);
+          if(buff_rcv[1] == -1){
+            buff_rcv[1] = 0;
+          }
+          if(buff_rcv[2] == -1){
+            buff_rcv[2] = 0;
+          }
           enqueue_work(work_queue_ptr,buff_rcv[1],buff_rcv[2]);
           
           break;
