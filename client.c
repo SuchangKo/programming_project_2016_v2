@@ -15,6 +15,9 @@
 #define  DOWN 2
 #define  FLOOR_MAX 10
 #define  FLOOR_MIN 0
+#define  TRUE 1
+#define  FALSE 0
+
 
 int tts_flag = TRUE;
 
