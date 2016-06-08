@@ -35,7 +35,7 @@ typedef struct _elevator
     int now_floor;
     int troubleFlag; // elevator malfunction
     int fullFlag; //is elevator full?
-    int direction;
+    int now_direction;
 }elevator;
 
 /*
@@ -139,7 +139,7 @@ void init_elevator (elevator *elevator_ptr) {
   elevator_ptr->now_floor = 1;
   elevator_ptr->troubleFlag = 0;
   elevator_ptr->fullFlag = 0;
-  elevator_ptr->direction = 0;
+  elevator_ptr->now_direction = 0;
 }
 
 //가장 중요해!!!
@@ -177,7 +177,7 @@ void worker(elevator *elevator_array[], work_queue* work_queue_ptr){
           printf("%d %d\n",elevator_array[i]->now_work->target_floor , elevator_array[i]->now_work->start_floor );
           printf("1Error!!!!\n");
         }
-        elevator_array[i]->direction = direction;
+        elevator_array[i]->now_direction = direction;
         elevator_array[i]->now_floor += direction; //한층씩 이동
         //도착함
         if(elevator_array[i]->now_floor == elevator_array[i]->now_work->target_floor){
@@ -204,7 +204,7 @@ void worker(elevator *elevator_array[], work_queue* work_queue_ptr){
         }else{
           printf("Error2\n");
         }
-        elevator_array[i]->direction = direction;
+        elevator_array[i]->now_direction = direction;
         elevator_array[i]->now_floor += direction; //한층씩 이동
         if(elevator_array[i]->now_floor == elevator_array[i]->now_work->start_floor){
           elevator_array[i]->fullFlag = TRUE;
