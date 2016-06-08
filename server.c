@@ -211,11 +211,14 @@ void worker(elevator *elevator_array[], work_queue* work_queue_ptr){
 
 }
 
+/*
 void delay1(clock_t n)
 {
   clock_t start = clock();
   while(clock() - start < n);
 }
+*/
+
 void show(elevator *elevator_ptr[])
 {
   // boolean elevatorExists;  : 0 = not exists  / 1 = exists
@@ -236,11 +239,11 @@ void show(elevator *elevator_ptr[])
   
   int i, j;
   system("clear");
-  printf("Elevator Simulation\n");
+  printf("\n\n\n");
+  printf("                       Elevator Simulation                      \n\n\n");
+  //building ceiling
+  printf("╔════════════════════╦════════════════════╦════════════════════╗\n");
   for (i = 10; i >= 0; i--) {
-    //building ceiling with Floor mark.
-    printf("╠════════════════════╬════════════════════╬════════════════════╣ %dF\n", i);
-
     //elevator top part
     for (j = 0; j<3; j++) {
       printf("║");
@@ -305,10 +308,18 @@ void show(elevator *elevator_ptr[])
       }
     }
     printf("║\n");
+
+    //building bottom with floor marks
+    if(i==0) printf("╠════════════════════╬════════════════════╬════════════════════╣ %2dF\n", i-1);
+    else printf("╠════════════════════╬════════════════════╬════════════════════╣ %2dF\n", i);
   }
-  //building bottom
-  printf("╠════════════════════╬════════════════════╬════════════════════╣\n");
-  
+  for(j=0; j<3; j++) {
+    printf("[Elevator%d] Now :: %dF", j, elevator_ptr[j]->now_floor);
+    if(elevator_ptr[j]->now_work != NULL) {
+      printf("  /  Objective :: From %dF To %dF", elevator_ptr[j]->now_work->start_floor, elevator_ptr[j]->now_work->target_floor);
+    }
+    printf("\n");
+  }
 }
 
 /*
@@ -412,12 +423,8 @@ int main( void)
           break;
         }
         case 2:{ //hold
-          if(buff_rcv[1] == 1){
-            printf("[일시정지]\n");
-            holdFlag = 1;
-          } else {
-            printf("ERROR :: buff_rcv");
-          }
+          printf("[일시정지]\n");
+          holdFlag = 1;
           break;
         }
         case 3:{ //velocity
@@ -447,16 +454,15 @@ int main( void)
       }
 
       show(elevator_array);
-      usleep(velocity*1000);
     } else {
-      printf("현재 일시정지중입니다.\n");
+      printf("System :: 현재 일시정지중입니다.\n");
       if(i > 1) {
         if(buff_rcv[0] == 2) {
-          buff_rcv[1] = 0;
           holdFlag = 0;
           printf("System :: 일시정지 해제하였습니다.\n");
         }
       }
     }
+    usleep(velocity*1000);
   }
 }
