@@ -471,6 +471,7 @@ int main( void)
 
       show(elevator_array);
     } else {
+      system("clear");
       printf("System :: 현재 일시정지중입니다.\n");
       if(i > 1) {
         if(buff_rcv[0] == 2) {
