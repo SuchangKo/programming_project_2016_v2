@@ -5,4 +5,7 @@ Programming Project
 
  shortest job first
  UDP
- 
+
+###To install tts Library
+
+sudo apt-get install libttspico0 libttspico-utils libttspico-data
