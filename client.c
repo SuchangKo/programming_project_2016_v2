@@ -16,6 +16,8 @@
 #define  FLOOR_MAX 10
 #define  FLOOR_MIN 0
 
+int tts_flag = TRUE;
+
 /*
 * Protocol
 * length : 3Byte 
@@ -70,11 +72,13 @@ int mygetch(void)
 }
 
 void tts(char msg[]) {
-  char buff[256];
-  sprintf(buff, "pico2wave -w test.wav \"%s\"", msg);
-  system(buff);
-  system("aplay -q test.wav");
-  memset(buff, '\0', 256);
+   if(tts_flag == TRUE){
+     char buff[256];
+     sprintf(buff, "pico2wave -w test.wav \"%s\"", msg);
+     system(buff);
+     system("aplay -q test.wav");
+     memset(buff, '\0', 256);
+   }
 }
 
 int   main( int argc, char **argv)
@@ -111,6 +115,7 @@ int   main( int argc, char **argv)
       printf("[3] 속도 조절\n");           tts("3, Adjust Velocity.");
       printf("[4] 수리\n");               tts("4, Repair.");
       printf("[5] 종료\n");               tts("5, Exit.");
+      printf("[6] TTS ON/OFF\n");               tts("6, TTS On,Off.");
       printf("=================\n");
       printf("[INPUT] : ");              tts("Input your number.");
       scanf("%d",&cmd);
@@ -183,6 +188,16 @@ int   main( int argc, char **argv)
          cmd_msg[0] = 5; 
          cmd_msg[1] = 0; //Not Used
          cmd_msg[2] = 0; //Not Used
+         break;
+         }
+      case 6:{ // TTS On,Off
+         if(tts_flag == TRUE){
+            printf("TTS OFF\n");
+            tts_flag = FALSE;
+         }else{
+            printf("TTS ON\n");
+            tts_flag = TRUE;
+         }
          break;
          }
       }
