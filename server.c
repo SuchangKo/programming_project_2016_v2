@@ -77,7 +77,7 @@ typedef struct _elevator
 */
 
 
-void enqueue_work(work_queue* work_queue_ptr,int add_target_floor, int add_start_floor){
+void enqueue_work(work_queue* work_queue_ptr,int add_start_floor,int add_target_floor){
   //TODO : 현재 들어온 Work를 큐에 넣어준다.
   work_ptr new_work_ptr = (work*)malloc(sizeof(work));
   new_work_ptr->target_floor = add_target_floor;
@@ -85,6 +85,7 @@ void enqueue_work(work_queue* work_queue_ptr,int add_target_floor, int add_start
   new_work_ptr->next_work = work_queue_ptr->work_head;
   work_queue_ptr->work_head = new_work_ptr;
   work_queue_ptr->work_count++;
+  printf("enqueue_work : %d\n",work_queue_ptr->work_count );
 }
 
 work_ptr dequeue_work(work_queue* work_queue_ptr){
@@ -99,13 +100,15 @@ work_ptr dequeue_work(work_queue* work_queue_ptr){
       prev_work_ptr = tmp_work_ptr;
       tmp_work_ptr = tmp_work_ptr->next_work;
     }
+
     work_queue_ptr->work_count--;
     if(work_queue_ptr->work_count == 0){
       work_queue_ptr->work_head = NULL;
     }else{
       prev_work_ptr->next_work = tmp_work_ptr->next_work;
     }
-    return tmp_work_ptr;
+    printf("%d %d\n",prev_work_ptr->start_floor,prev_work_ptr->target_floor );
+    return prev_work_ptr;
   }
 }
 
@@ -139,18 +142,27 @@ void init_elevator (elevator *elevator_ptr) {
 
 //가장 중요해!!!
 void worker(elevator *elevator_array[], work_queue* work_queue_ptr){
+  
   int i = 0;
   //Work 배정
-  if(work_queue_ptr->work_count > 0){
-    for(i=0; i<3; i++) {
+  printf("work_count %d\n",work_queue_ptr->work_count );
+  
+    
+  for(i=0; i<3; i++) {
+    if(work_queue_ptr->work_count > 0){
       if(elevator_array[i]->now_work == NULL){
+  
         elevator_array[i]->now_work = dequeue_work(work_queue_ptr);
+        printf("배정 : %d번 || %d -> %d\n",i,elevator_array[i]->now_work->start_floor,elevator_array[i]->now_work->target_floor);
       }
     }  
   }
+  printf("[DEBUG] WORK 1\n");
   //엘레베이터 이동
   for(i=0; i<3; i++) {
+    printf("[DEBUG] WORK 2\n");
     if(elevator_array[i]->now_work != NULL){
+      printf("[DEBUG] WORK 3\n");
       int direction;
       if(elevator_array[i]->fullFlag == TRUE){ //동작중
         if(elevator_array[i]->now_work->target_floor > elevator_array[i]->now_work->start_floor){
@@ -158,7 +170,8 @@ void worker(elevator *elevator_array[], work_queue* work_queue_ptr){
         }else if(elevator_array[i]->now_work->target_floor < elevator_array[i]->now_work->start_floor){
           direction = -1; //내려감
         }else{
-          printf("Error!!!!\n");
+          printf("%d %d\n",elevator_array[i]->now_work->target_floor , elevator_array[i]->now_work->start_floor );
+          printf("1Error!!!!\n");
         }
         elevator_array[i]->now_floor += direction; //한층씩 이동
         //도착함
@@ -166,6 +179,7 @@ void worker(elevator *elevator_array[], work_queue* work_queue_ptr){
           free(elevator_array[i]->now_work);
           elevator_array[i]->now_work = NULL;
           elevator_array[i]->now_count++;
+          elevator_array[i]->fullFlag = FALSE;
 
           //고장신고는 111
           if(elevator_array[i]->now_count == elevator_array[i]->target_count){
@@ -173,22 +187,23 @@ void worker(elevator *elevator_array[], work_queue* work_queue_ptr){
           }
         }
       }else{ //동작을 위해 이동
+        elevator_array[i]->fullFlag = FALSE;
         if(elevator_array[i]->now_floor < elevator_array[i]->now_work->start_floor){
           direction = 1; //올라감
         }else if(elevator_array[i]->now_floor > elevator_array[i]->now_work->start_floor){
           direction = -1; //내려감
+        }else if(elevator_array[i]->now_floor == elevator_array[i]->now_work->start_floor ){
+          direction = 0;
+          printf("%d %d\n",elevator_array[i]->now_floor , elevator_array[i]->now_work->start_floor );
+          printf("same!!!!\n");
         }else{
-          printf("Error!!!!\n");
+          printf("Error2\n");
         }
         elevator_array[i]->now_floor += direction; //한층씩 이동
         if(elevator_array[i]->now_floor == elevator_array[i]->now_work->start_floor){
           elevator_array[i]->fullFlag = TRUE;
         } 
       }
-
-      
-      
-      
     }
   }
 
@@ -330,14 +345,17 @@ int main( void)
 
   //Elevator
   elevator *elevator_array[3];
+  work_queue *work_queue_ptr;
+  work_queue_ptr = (work_queue*)malloc(sizeof(work_queue));
 
-  //Work
+  //Work 
   int velocity = 1000;
 
   //View
   int   holdFlag;
 
   int i;
+  
 
   sock  = socket( PF_INET, SOCK_DGRAM, 0);
   fcntl(sock, F_SETFL, O_NONBLOCK);
@@ -347,6 +365,7 @@ int main( void)
     exit( 1);
   }
 
+  
   memset( &server_addr, 0, sizeof( server_addr));
   server_addr.sin_family     = AF_INET;
   server_addr.sin_port       = htons( 4000);
@@ -357,26 +376,32 @@ int main( void)
     printf( "bind() 실행 에러n");
     exit( 1);
   }
-
+  
   //Setting
   for(i=0; i<3; i++) {
     elevator_array[i] = (elevator*) malloc(sizeof(elevator));
     init_elevator(elevator_array[i]);
+    
   }
-
+  
+  init_work_queue(work_queue_ptr);
+  
   while( 1)
   {
     client_addr_size  = sizeof( client_addr);
     int i = recvfrom( sock, buff_rcv, BUFF_SIZE, 0 , 
       ( struct sockaddr*)&client_addr, &client_addr_size);
     if(holdFlag == 0) {
-      //addQueue();
-      //work();
+      
+      worker(elevator_array,work_queue_ptr);
+      
 
       if(i > 1){
         switch(buff_rcv[0]){
         case 1:{ //move
           printf("[이동] %d층 -> %d층 \n",buff_rcv[1],buff_rcv[2]);
+          enqueue_work(work_queue_ptr,buff_rcv[1],buff_rcv[2]);
+          
           break;
         }
         case 2:{ //hold
