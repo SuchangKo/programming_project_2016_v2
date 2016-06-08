@@ -74,6 +74,53 @@ typedef struct _elevator
 * ----------------
 */
 
+
+void enqueue_work(work_queue* work_queue_ptr,int add_target_floor, int add_start_floor){
+  //TODO : 현재 들어온 Work를 큐에 넣어준다.
+  work_ptr new_work_ptr = (work*)malloc(sizeof(work));
+  new_work_ptr->target_floor = add_target_floor;
+  new_work_ptr->start_floor = add_start_floor;
+  new_work_ptr->next_work = work_queue_ptr->work_head;
+  work_queue_ptr->work_head = new_work_ptr;
+  work_queue_ptr->work_count++;
+}
+
+work_ptr dequeue_work(work_queue* work_queue_ptr){
+  //TODO : 맨 처음 들어온걸 리턴하고, 큐에서 제거한다.  
+  if(work_queue_ptr->work_count == 0){
+    return NULL;
+  }else{
+    int i = 0;
+    work_ptr tmp_work_ptr = work_queue_ptr->work_head;
+    work_ptr prev_work_ptr;
+    for(i = 0; i < work_queue_ptr->work_count; i++){
+      prev_work_ptr = tmp_work_ptr;
+      tmp_work_ptr = tmp_work_ptr->next_work;
+    }
+    work_queue_ptr->work_count--;
+    if(work_queue_ptr->work_count == 0){
+      work_queue_ptr->work_head = NULL;
+    }else{
+      prev_work_ptr->next_work = tmp_work_ptr->next_work;
+    }
+    return tmp_work_ptr;
+  }
+}
+
+work_ptr get_first_work(work_queue* work_queue_ptr){
+  //TODO : 가장 첫번째 작업을 리턴해준다.
+  if(work_queue_ptr->work_count == 0){
+    return NULL;
+  }else{
+    int i = 0;
+    work_ptr tmp_work_ptr = work_queue_ptr->work_head;
+    for(i = 0; i < work_queue_ptr->work_count; i++){
+      tmp_work_ptr = tmp_work_ptr->next_work;
+    }
+    return tmp_work_ptr;
+  }
+}
+
 void init_work_queue(work_queue* work_queue_ptr){
   work_queue_ptr->work_count = 0;
   work_queue_ptr->work_head = NULL;
@@ -84,7 +131,6 @@ void delay1(clock_t n)
   clock_t start = clock();
   while(clock() - start < n);
 }
-
 void show()
 {
   // boolean elevatorExists;  : 0 = not exists  / 1 = exists
