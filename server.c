@@ -397,7 +397,7 @@ int main( void)
       }
 
       show(elevator_array);
-      delay1(velocity*100);
+      usleep(velocity*1000);
     } else {
       printf("현재 일시정지중입니다.\n");
       if(i > 1) {
