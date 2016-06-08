@@ -134,7 +134,7 @@ void init_work_queue(work_queue* work_queue_ptr){
 
 void init_elevator (elevator *elevator_ptr) {
   elevator_ptr->now_work = NULL;
-  elevator_ptr->target_count = rand()%20 + 20;
+  elevator_ptr->target_count = rand()%5+5;
   elevator_ptr->now_count = 0;
   elevator_ptr->now_floor = 1;
   elevator_ptr->troubleFlag = 0;
@@ -152,7 +152,7 @@ void worker(elevator *elevator_array[], work_queue* work_queue_ptr){
     
   for(i=0; i<3; i++) {
     if(work_queue_ptr->work_count > 0){
-      if(elevator_array[i]->now_work == NULL){
+      if(elevator_array[i]->now_work == NULL && elevator_array[i]->troubleFlag == FALSE){
   
         elevator_array[i]->now_work = dequeue_work(work_queue_ptr);
         printf("배정 : %d번 || %d -> %d\n",i,elevator_array[i]->now_work->start_floor,elevator_array[i]->now_work->target_floor);
@@ -267,7 +267,7 @@ void show(elevator *elevator_ptr[])
       if (elevator_ptr[j]->now_floor == i) { //elevatorExists
         //If there is person in elevator, then elevator is taken(elevatorMove is true).
         if(elevator_ptr[j]->troubleFlag) { //elevatorTrouble
-          printf("│(!Trou)(%2dF)(BLE!)│", elevator_ptr[j]->now_work->target_floor);
+          printf("│(!Trou)(%2dF)(BLE!)│", elevator_ptr[j]->now_floor);
         }
         else {
           if (elevator_ptr[j]->now_work == NULL) { //elevatorMove
@@ -324,7 +324,7 @@ void show(elevator *elevator_ptr[])
     else printf("╠════════════════════╬════════════════════╬════════════════════╣ %2dF\n", i);
   }
   for(j=0; j<3; j++) {
-    printf("[Elevator%d] Now :: %dF", j, elevator_ptr[j]->now_floor);
+    printf("[Elevator%d] %d/%d Now :: %dF", j, elevator_ptr[j]->now_count ,elevator_ptr[j]->target_count ,elevator_ptr[j]->now_floor);
     if(elevator_ptr[j]->now_work != NULL) {
       printf("  /  Objective :: From %dF To %dF", elevator_ptr[j]->now_work->start_floor, elevator_ptr[j]->now_work->target_floor);
     }
@@ -448,6 +448,12 @@ int main( void)
         }
         case 4:{ //repair
           printf("[수리]\n");
+          int index = 0;
+          for(index = 0; index < 3; index++){
+            elevator_array[index]->troubleFlag = FALSE;
+            elevator_array[index]->target_count = rand()%5+5;//+ 20;
+            elevator_array[index]->now_count = 0;            
+          }
           break;
         }
         case 5:{ //quit
