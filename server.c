@@ -34,6 +34,7 @@ typedef struct _elevator
     int now_count; //현재 이동횟수
     int now_floor;
     int troubleFlag; // elevator malfunction
+    int fullFlag; //is elevator full?
 }elevator;
 
 /*
@@ -133,6 +134,7 @@ void init_elevator (elevator *elevator_ptr) {
   elevator_ptr->now_count = 0;
   elevator_ptr->now_floor = 1;
   elevator_ptr->troubleFlag = 0;
+  elevator_ptr->fullFlag = 0;
 }
 
 void delay1(clock_t n)
@@ -143,22 +145,25 @@ void delay1(clock_t n)
 void show(elevator *elevator_ptr[])
 {
   // boolean elevatorExists;  : 0 = not exists  / 1 = exists
-  // => elevator_ptr[i]->now_floor == i
+  // => elevator_ptr[j]->now_floor == i
   // boolean elevatorMove;    : 0 = not move    / 1 = move
   // => elevator_ptr[j]->now_work == NULL
+  // boolean elevatorFull;    : 0 = Empty       / 1 = Full
+  // => elevator_ptr[j]->fullFlag
   // boolean elevatorUp;      : 0 = going down  / 1 = going up
+  // => elevator_ptr[j]->now_work->target_floor >= elevator_ptr[j]->now_work->start_floor
   // boolean elevatorTrouble; : 0 = normal      / 1 = abnormal
+  // => elevator_ptr[j]->trounbleFlag
   // must be initiallized.
   // boolean values are from elevator Structure
   // ex. elevator->elevatorExists
 
   // floor 0 is floor -1
-  /*
+  
   int i, j;
+  system("clear");
+  printf("Elevator Simulation\n");
   for (i = 10; i >= 0; i--) {
-    system("clear");
-
-    printf("Elevator Simulation\n");
     //building ceiling with Floor mark.
     printf("╠════════════════════╬════════════════════╬════════════════════╣ %dF\n", i);
 
@@ -180,25 +185,30 @@ void show(elevator *elevator_ptr[])
       printf("║");
       if (elevator_ptr[j]->now_floor == i) { //elevatorExists
         //If there is person in elevator, then elevator is taken(elevatorMove is true).
-        if(elevatorTrouble) {
-          printf("|(!Trou)(%dF)(BLE!)|", floorNum);
+        if(elevator_ptr[j]->troubleFlag) { //elevatorTrouble
+          printf("│(!Trou)(%2dF)(BLE!)│", elevator_ptr[j]->now_work->target_floor);
         }
         else {
           if (elevator_ptr[j]->now_work == NULL) { //elevatorMove
-            //When elevator is going up, elevatorUp is true.
-            if (elevatorUp) {
-              printf("|(FULL!)(%dF)( UP )|", floorNum);
-            }
-            else {
-              printf("|(FULL!)(%dF)(DOWN)|", floorNum);
-            }
+            printf("│(EMPTY)(%2dF)(STOP)│", elevator_ptr[j]->now_floor);
           }
           else {
-            if (elevatorUp) {
-              printf("|(EMPTY)(%dF)( UP )|", floorNum);
+            if(elevator_ptr[j]->fullFlag) {
+              //When elevator is going up, elevatorUp is true.
+              if (elevator_ptr[j]->now_work->target_floor >= elevator_ptr[j]->now_work->start_floor) { //elevatorUp
+                printf("│(FULL!)(%2dF)( UP )│", elevator_ptr[j]->now_work->target_floor);
+              }
+              else {
+                printf("│(FULL!)(%2dF)(DOWN)│", elevator_ptr[j]->now_work->target_floor);
+              }
             }
             else {
-              printf("|(EMPTY)(%dF)(DOWN)|", floorNum);
+              if (elevator_ptr[j]->now_work->target_floor >= elevator_ptr[j]->now_work->start_floor) { //elevator Up
+                printf("│(EMPTY)(%2dF)( UP )│", elevator_ptr[j]->now_work->target_floor);
+              }
+              else {
+                printf("│(EMPTY)(%2dF)(DOWN)│", elevator_ptr[j]->now_work->target_floor);
+              }
             }
           }
         }
@@ -221,11 +231,10 @@ void show(elevator *elevator_ptr[])
       }
     }
     printf("║\n");
-
-    //building bottom
-    printf("╠════════════════════╬════════════════════╬════════════════════╣\n");
   }
-  */
+  //building bottom
+  printf("╠════════════════════╬════════════════════╬════════════════════╣\n");
+  
 }
 
 /*
@@ -295,6 +304,7 @@ int main( void)
   //Setting
   for(i=0; i<3; i++) {
     elevator_array[i] = (elevator*) malloc(sizeof(elevator));
+    init_elevator(elevator_array[i]);
   }
 
   while( 1)
@@ -348,7 +358,7 @@ int main( void)
       }
 
       show(elevator_array);
-      delay1(velocity);
+      delay1(velocity*100);
     } else {
       printf("현재 일시정지중입니다.\n");
       if(i > 1) {
