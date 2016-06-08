@@ -19,7 +19,7 @@ typedef struct _work
   struct _work* next_work;
 }work;
 
-typedef *work work_ptr;
+typedef work* work_ptr;
 
 typedef struct _work_queue
 {
@@ -97,6 +97,7 @@ void show()
 
   // floor 0 is floor -1
   
+  /*
   int i, j;
   for (i = 10; i >= 0; i--) {
     system("clear");
@@ -168,6 +169,7 @@ void show()
     //building bottom
     printf("╠════════════════════╬════════════════════╬════════════════════╣\n");
   }
+  */
 }
 
 int main( void)
@@ -250,7 +252,7 @@ int main( void)
       //show();
       delay1(1000);
     } else {
-      System.out.println("현재 일시정지중입니다.\n");
+      printf("현재 일시정지중입니다.\n");
     }
   }
 }
