@@ -276,19 +276,25 @@ void show(elevator *elevator_ptr[])
           else {
             if(elevator_ptr[j]->fullFlag) {
               //When elevator is going up, elevatorUp is true.
-              if (elevator_ptr[j]->now_work->target_floor >= elevator_ptr[j]->now_work->start_floor) { //elevatorUp
+              if (elevator_ptr[j]->now_direction == 1) { //elevatorUp
                 printf("│(FULL!)(%2dF)( UP )│", elevator_ptr[j]->now_work->target_floor);
               }
-              else {
+              else if(elevator_ptr[j]->now_direction == -1) {
                 printf("│(FULL!)(%2dF)(DOWN)│", elevator_ptr[j]->now_work->target_floor);
+              }
+              else {
+                printf("│(FULL!)(%2dF)(STOP)│", elevator_ptr[j]->now_work->target_floor);
               }
             }
             else {
-              if (elevator_ptr[j]->now_work->target_floor >= elevator_ptr[j]->now_work->start_floor) { //elevator Up
+              if (elevator_ptr[j]->now_direction == 1) { //elevator Up
                 printf("│(EMPTY)(%2dF)( UP )│", elevator_ptr[j]->now_work->target_floor);
               }
-              else {
+              else if(elevator_ptr[j]->now_direction == -1){
                 printf("│(EMPTY)(%2dF)(DOWN)│", elevator_ptr[j]->now_work->target_floor);
+              }
+              else {
+                printf("│(EMPTY)(%2dF)(STOP)│", elevator_ptr[j]->now_work->target_floor);
               }
             }
           }
