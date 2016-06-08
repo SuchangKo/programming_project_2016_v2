@@ -137,6 +137,45 @@ void init_elevator (elevator *elevator_ptr) {
   elevator_ptr->fullFlag = 0;
 }
 
+//가장 중요해!!!
+void worker(elevator *elevator_array[], work_queue* work_queue_ptr){
+  int i = 0;
+  //Work 배정
+  if(work_queue_ptr->work_count > 0){
+    for(i=0; i<3; i++) {
+      if(elevator_array[i]->now_work == NULL){
+        elevator_array[i]->now_work = dequeue_work(work_queue_ptr);
+      }
+    }  
+  }
+  //엘레베이터 이동
+  for(i=0; i<3; i++) {
+    if(elevator_array[i]->now_work != NULL){
+      int direction;
+      if(elevator_array[i]->now_work->target_floor > elevator_array[i]->now_work->start_floor){
+        direction = 1; //올라감
+      }else if(elevator_array[i]->now_work->target_floor < elevator_array[i]->now_work->start_floor){
+        direction = -1; //내려감
+      }else{
+        printf("Error!!!!\n");
+      }
+      elevator_array[i]->now_floor += direction; //한층씩 이동
+      //도착함
+      if(elevator_array[i]->now_floor == elevator_array[i]->now_work->target_floor){
+        free(elevator_array[i]->now_work);
+        elevator_array[i]->now_work = NULL;
+        elevator_array[i]->now_count++;
+
+        //고장신고는 111
+        if(elevator_array[i]->now_count == elevator_array[i]->target_count){
+          elevator_array[i]->troubleFlag = 1;
+        }
+      }
+    }
+  }
+
+}
+
 void delay1(clock_t n)
 {
   clock_t start = clock();
