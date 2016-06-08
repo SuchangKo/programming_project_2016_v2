@@ -85,17 +85,23 @@ void delay1(clock_t n)
   while(clock() - start < n);
 }
 
-void show(char buff_rcv[])
+void show()
 {
-  /*
-  // boolean elevatorExists, elevatorTaken, elevatorUp
+  // boolean elevatorExists;  : 0 = not exists  / 1 = exists
+  // boolean elevatorMove;    : 0 = not move    / 1 = move
+  // boolean elevatorUp;      : 0 = going down  / 1 = going up
+  // boolean elevatorTrouble; : 0 = normal      / 1 = abnormal
   // must be initiallized.
   // boolean values are from elevator Structure
   // ex. elevator->elevatorExists
 
   // floor 0 is floor -1
+  
   int i, j;
   for (i = 10; i >= 0; i--) {
+    system("clear");
+
+    printf("Elevator Simulation\n");
     //building ceiling with Floor mark.
     printf("╠════════════════════╬════════════════════╬════════════════════╣ %dF\n", i);
 
@@ -103,7 +109,7 @@ void show(char buff_rcv[])
     for (j = 0; j<3; j++) {
       printf("║");
       if (elevatorExists) {
-        //If there is person in elevator, then elevator is taken(elevatorTaken is true).
+        //If there is person in elevator, then elevator is moving(elevatorMove is true).
         printf("┌──────────────────┐");
       }
       else {
@@ -116,22 +122,27 @@ void show(char buff_rcv[])
     for (j = 0; j<3; j++) {
       printf("║");
       if (elevatorExists) {
-        //If there is person in elevator, then elevator is taken(elevatorTaken is true).
-        if (elevatorTaken) {
-          //When elevator is going up, elevatorUp is true.
-          if (elevatorUp) {
-            printf("|(FULL!)(%dF)( UP )|", floorNum);
-          }
-          else {
-            printf("|(FULL!)(%dF)(DOWN)|", floorNum);
-          }
+        //If there is person in elevator, then elevator is taken(elevatorMove is true).
+        if(elevatorTrouble) {
+          printf("|(!Trou)(%dF)(BLE!)|", floorNum);
         }
         else {
-          if (elevatorUp) {
-            printf("|(EMPTY)(%dF)( UP )|", floorNum);
+          if (elevatorMove) {
+            //When elevator is going up, elevatorUp is true.
+            if (elevatorUp) {
+              printf("|(FULL!)(%dF)( UP )|", floorNum);
+            }
+            else {
+              printf("|(FULL!)(%dF)(DOWN)|", floorNum);
+            }
           }
           else {
-            printf("|(EMPTY)(%dF)(DOWN)|", floorNum);
+            if (elevatorUp) {
+              printf("|(EMPTY)(%dF)( UP )|", floorNum);
+            }
+            else {
+              printf("|(EMPTY)(%dF)(DOWN)|", floorNum);
+            }
           }
         }
       }
@@ -145,7 +156,7 @@ void show(char buff_rcv[])
     for (j = 0; j<3; j++) {
       printf("║");
       if (elevatorExists) {
-        //If there is person in elevator, then elevator is taken(elevatorTaken is true).
+        //If there is person in elevator, then elevator is moving(elevatorMove is true).
         printf("└──────────────────┘");
       }
       else {
@@ -156,7 +167,6 @@ void show(char buff_rcv[])
 
     //building bottom
     printf("╠════════════════════╬════════════════════╬════════════════════╣\n");
-    */
   }
 }
 
@@ -172,7 +182,7 @@ int main( void)
   char   buff_snd[BUFF_SIZE+5];
 
   //View
-  int   viewFlag;
+  int   holdFlag;
 
   sock  = socket( PF_INET, SOCK_DGRAM, 0);
   fcntl(sock, F_SETFL, O_NONBLOCK);
@@ -195,53 +205,52 @@ int main( void)
 
   while( 1)
   {
-    if(viewFlag == 0) {
-      client_addr_size  = sizeof( client_addr);
-      int i = recvfrom( sock, buff_rcv, BUFF_SIZE, 0 , 
-        ( struct sockaddr*)&client_addr, &client_addr_size);
-      //clearScreen();
+    client_addr_size  = sizeof( client_addr);
+    int i = recvfrom( sock, buff_rcv, BUFF_SIZE, 0 , 
+      ( struct sockaddr*)&client_addr, &client_addr_size);
+    if(holdFlag == 0) {
+      //addQueue();
+      //work();
+
       if(i > 1){
-        system("clear");
-          switch(buff_rcv[0]){
-          case 1:{
-            printf("[이동] %d층 -> %d층 \n",buff_rcv[1],buff_rcv[2]);
-            break;
-          }
-          case 2:{
-            if(buff_rcv[1] == 1){
-              printf("[일시정지]\n");
-            }else{
-              printf("[시작]\n");
-            }
-            break;
-          }
-          case 3:{
-            printf("[속도 조절] %d단계\n",buff_rcv[1]);
-            break;
-          }
-          case 4:{
-            printf("[수리]\n");
-            break;
-          }
-          case 5:{
-            printf("[종료]\n");
-            return 0;
-            break;
-          }
+        switch(buff_rcv[0]){
+        case 1:{ //move
+          printf("[이동] %d층 -> %d층 \n",buff_rcv[1],buff_rcv[2]);
+          break;
         }
-        //printf( "1eceive: %d %s %d \n",i, buff_rcv,strlen(buff_rcv));
-        sprintf( buff_snd, "%s%s", buff_rcv, buff_rcv);
-        sendto( sock, buff_snd, strlen( buff_snd)+1, 0,  // +1: NULL까지 포함해서 전송
-          ( struct sockaddr*)&client_addr, sizeof( client_addr)); 
+        case 2:{ //hold
+          if(buff_rcv[1] == 1){
+            printf("[일시정지]\n");
+          }else{
+            printf("[시작]\n");
+          }
+          break;
+        }
+        case 3:{ //velocity
+          printf("[속도 조절] %d단계\n",buff_rcv[1]);
+          break;
+        }
+        case 4:{ //repair
+          printf("[수리]\n");
+          break;
+        }
+        case 5:{ //quit
+          printf("[종료]\n");
+          return 0;
+          break;
+        }
       }
-      viewFlag = 1;
+
+      //printf( "1eceive: %d %s %d \n",i, buff_rcv,strlen(buff_rcv));
+      sprintf( buff_snd, "%s%s", buff_rcv, buff_rcv);
+      sendto( sock, buff_snd, strlen( buff_snd)+1, 0,  // +1: NULL까지 포함해서 전송
+        ( struct sockaddr*)&client_addr, sizeof( client_addr)); 
+      }
+
+      //show();
+      delay1(1000);
     } else {
-      //View
-      while(1) {
-        show(buff_rcv);
-        delay1(1000);
-      }
-      viewFlag = 0;
+      System.out.println("현재 일시정지중입니다.\n");
     }
   }
 }
