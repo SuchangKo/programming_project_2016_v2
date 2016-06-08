@@ -33,6 +33,7 @@ typedef struct _elevator
     int target_count; //목표 횟수 (목표 횟수에 다다르면, 고장처리)
     int now_count; //현재 이동횟수
     int now_floor;
+    int troubleFlag; // elevator malfunction
 }elevator;
 
 /*
@@ -126,15 +127,25 @@ void init_work_queue(work_queue* work_queue_ptr){
   work_queue_ptr->work_head = NULL;
 }
 
+void init_elevator (elevator *elevator_ptr) {
+  elevator_ptr->now_work = NULL;
+  elevator_ptr->target_count = rand()%20 + 20;
+  elevator_ptr->now_count = 0;
+  elevator_ptr->now_floor = 1;
+  elevator_ptr->troubleFlag = 0;
+}
+
 void delay1(clock_t n)
 {
   clock_t start = clock();
   while(clock() - start < n);
 }
-void show()
+void show(elevator *elevator_ptr[])
 {
   // boolean elevatorExists;  : 0 = not exists  / 1 = exists
+  // => elevator_ptr[i]->now_floor == i
   // boolean elevatorMove;    : 0 = not move    / 1 = move
+  // => elevator_ptr[j]->now_work == NULL
   // boolean elevatorUp;      : 0 = going down  / 1 = going up
   // boolean elevatorTrouble; : 0 = normal      / 1 = abnormal
   // must be initiallized.
@@ -142,7 +153,6 @@ void show()
   // ex. elevator->elevatorExists
 
   // floor 0 is floor -1
-  
   /*
   int i, j;
   for (i = 10; i >= 0; i--) {
@@ -155,7 +165,7 @@ void show()
     //elevator top part
     for (j = 0; j<3; j++) {
       printf("║");
-      if (elevatorExists) {
+      if (elevator_ptr[j]->now_floor == i) { //elevatorExists
         //If there is person in elevator, then elevator is moving(elevatorMove is true).
         printf("┌──────────────────┐");
       }
@@ -168,13 +178,13 @@ void show()
     //elevator middle part
     for (j = 0; j<3; j++) {
       printf("║");
-      if (elevatorExists) {
+      if (elevator_ptr[j]->now_floor == i) { //elevatorExists
         //If there is person in elevator, then elevator is taken(elevatorMove is true).
         if(elevatorTrouble) {
           printf("|(!Trou)(%dF)(BLE!)|", floorNum);
         }
         else {
-          if (elevatorMove) {
+          if (elevator_ptr[j]->now_work == NULL) { //elevatorMove
             //When elevator is going up, elevatorUp is true.
             if (elevatorUp) {
               printf("|(FULL!)(%dF)( UP )|", floorNum);
@@ -202,7 +212,7 @@ void show()
     //elevator bottom part
     for (j = 0; j<3; j++) {
       printf("║");
-      if (elevatorExists) {
+      if (elevator_ptr[j]->now_floor == i) { //elevatorExists
         //If there is person in elevator, then elevator is moving(elevatorMove is true).
         printf("└──────────────────┘");
       }
@@ -218,8 +228,31 @@ void show()
   */
 }
 
+/*
+void tts(char msg[]) {
+  char buff[256];
+  sprintf(buff, "pico2wave -w test.wav \"%s\"", msg);
+  system(buff);
+  system("aplay -q test.wav");
+  memset(buff, '\0', 256);
+}
+*/
+
+void elevatorTroubleCheck(elevator *elevator_ptr[]) {
+// int target_count; //목표 횟수 (목표 횟수에 다다르면, 고장처리)
+// int now_count; //현재 이동횟수
+// int troubleFlag; // elevator malfunction
+  int i;
+  for(i=0; i<3; i++) {
+    if(elevator_ptr[i]->now_count >= elevator_ptr[i]->target_count) {
+      elevator_ptr[i]->troubleFlag = 1;
+    }
+  }
+}
+
 int main( void)
 {
+  //Socket
   int   sock;
   int   client_addr_size;
 
@@ -229,8 +262,16 @@ int main( void)
   char   buff_rcv[BUFF_SIZE+5];
   char   buff_snd[BUFF_SIZE+5];
 
+  //Elevator
+  elevator *elevator_array[3];
+
+  //Work
+  int velocity = 1000;
+
   //View
   int   holdFlag;
+
+  int i;
 
   sock  = socket( PF_INET, SOCK_DGRAM, 0);
   fcntl(sock, F_SETFL, O_NONBLOCK);
@@ -251,6 +292,11 @@ int main( void)
     exit( 1);
   }
 
+  //Setting
+  for(i=0; i<3; i++) {
+    elevator_array[i] = (elevator*) malloc(sizeof(elevator));
+  }
+
   while( 1)
   {
     client_addr_size  = sizeof( client_addr);
@@ -269,12 +315,18 @@ int main( void)
         case 2:{ //hold
           if(buff_rcv[1] == 1){
             printf("[일시정지]\n");
-          }else{
-            printf("[시작]\n");
+            holdFlag = 1;
+          } else {
+            printf("ERROR :: buff_rcv");
           }
           break;
         }
         case 3:{ //velocity
+          switch(buff_rcv[1]) {
+            case 1: velocity = 500;  break;
+            case 2: velocity = 1000; break;
+            case 3: velocity = 1500; break;
+          }
           printf("[속도 조절] %d단계\n",buff_rcv[1]);
           break;
         }
@@ -295,10 +347,17 @@ int main( void)
         ( struct sockaddr*)&client_addr, sizeof( client_addr)); 
       }
 
-      //show();
-      delay1(1000);
+      show(elevator_array);
+      delay1(velocity);
     } else {
       printf("현재 일시정지중입니다.\n");
+      if(i > 1) {
+        if(buff_rcv[0] == 2) {
+          buff_rcv[1] = 0;
+          holdFlag = 0;
+          printf("System :: 일시정지 해제하였습니다.\n");
+        }
+      }
     }
   }
 }
