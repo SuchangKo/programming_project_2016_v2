@@ -8,27 +8,32 @@
 #include <fcntl.h>
 #include <time.h>
 
-#define  BUFF_SIZE   1024
-
-typedef struct _person {
-  int currentFloor; //current floor for person
-  int toGoFloor; //floor to go for person
-  struct _person *person_next;
-} person;
-
-typedef person *person_ptr;
-
-typedef struct {
-  int man_flag;   //사람이 탔는지(1) 안탔는지(0)
-  int direction_flag; //위로가는지(1) 아래로가는지(0)
-  int now;      //현재 층
-  int togo;     //목적층
-  int error;    //고장횟수
-  person_ptr person_head;
-} elevator;
-
+#define BUFF_SIZE   1024
 #define TRUE 1
 #define FALSE 0
+
+typedef struct _work
+{
+  int target_floor;
+  int start_floor; 
+  struct _work* next_work;
+}work;
+
+typedef *work work_ptr;
+
+typedef struct _work_queue
+{
+  int work_count;
+  work_ptr work_head;
+}work_queue;
+
+typedef struct _elevator
+{
+    work_ptr now_work;
+    int target_count; //목표 횟수 (목표 횟수에 다다르면, 고장처리)
+    int now_count; //현재 이동횟수
+    int now_floor;
+}elevator;
 
 /*
 * Protocol
@@ -69,10 +74,9 @@ typedef struct {
 * ----------------
 */
 
-void init(elevator *elevator_ptr) {
-  elevator_ptr->now = 1;
-  elevator_ptr->togo = 1;
-  elevator_ptr->person_head = NULL;
+void init_work_queue(work_queue* work_queue_ptr){
+  work_queue_ptr->work_count = 0;
+  work_queue_ptr->work_head = NULL;
 }
 
 void delay1(clock_t n)
@@ -83,13 +87,13 @@ void delay1(clock_t n)
 
 void show(char buff_rcv[])
 {
+  /*
   // boolean elevatorExists, elevatorTaken, elevatorUp
   // must be initiallized.
   // boolean values are from elevator Structure
   // ex. elevator->elevatorExists
 
   // floor 0 is floor -1
-  /*
   int i, j;
   for (i = 10; i >= 0; i--) {
     //building ceiling with Floor mark.
@@ -152,8 +156,8 @@ void show(char buff_rcv[])
 
     //building bottom
     printf("╠════════════════════╬════════════════════╬════════════════════╣\n");
+    */
   }
-  */
 }
 
 int main( void)
@@ -189,45 +193,55 @@ int main( void)
     exit( 1);
   }
 
-  while(1)
+  while( 1)
   {
-    client_addr_size  = sizeof( client_addr);
-    int i = recvfrom( sock, buff_rcv, BUFF_SIZE, 0 , 
-      ( struct sockaddr*)&client_addr, &client_addr_size);
-    //clearScreen();
-    if(i > 1){
-      system("clear");
-        switch(buff_rcv[0]){
-        case 1:{
-          printf("[이동] %d층 -> %d층 \n",buff_rcv[1],buff_rcv[2]);
-          break;
-        }
-        case 2:{
-          if(buff_rcv[1] == 1){
-            printf("[일시정지]\n");
-          }else{
-            printf("[시작]\n");
+    if(viewFlag == 0) {
+      client_addr_size  = sizeof( client_addr);
+      int i = recvfrom( sock, buff_rcv, BUFF_SIZE, 0 , 
+        ( struct sockaddr*)&client_addr, &client_addr_size);
+      //clearScreen();
+      if(i > 1){
+        system("clear");
+          switch(buff_rcv[0]){
+          case 1:{
+            printf("[이동] %d층 -> %d층 \n",buff_rcv[1],buff_rcv[2]);
+            break;
           }
-          break;
+          case 2:{
+            if(buff_rcv[1] == 1){
+              printf("[일시정지]\n");
+            }else{
+              printf("[시작]\n");
+            }
+            break;
+          }
+          case 3:{
+            printf("[속도 조절] %d단계\n",buff_rcv[1]);
+            break;
+          }
+          case 4:{
+            printf("[수리]\n");
+            break;
+          }
+          case 5:{
+            printf("[종료]\n");
+            return 0;
+            break;
+          }
         }
-        case 3:{
-          printf("[속도 조절] %d단계\n",buff_rcv[1]);
-          break;
-        }
-        case 4:{
-          printf("[수리]\n");
-          break;
-        }
-        case 5:{
-          printf("[종료]\n");
-          return 0;
-          break;
-        }
+        //printf( "1eceive: %d %s %d \n",i, buff_rcv,strlen(buff_rcv));
+        sprintf( buff_snd, "%s%s", buff_rcv, buff_rcv);
+        sendto( sock, buff_snd, strlen( buff_snd)+1, 0,  // +1: NULL까지 포함해서 전송
+          ( struct sockaddr*)&client_addr, sizeof( client_addr)); 
       }
-      //printf( "1eceive: %d %s %d \n",i, buff_rcv,strlen(buff_rcv));
-      sprintf( buff_snd, "%s%s", buff_rcv, buff_rcv);
-      sendto( sock, buff_snd, strlen( buff_snd)+1, 0,  // +1: NULL까지 포함해서 전송
-        ( struct sockaddr*)&client_addr, sizeof( client_addr)); 
+      viewFlag = 1;
+    } else {
+      //View
+      while(1) {
+        show(buff_rcv);
+        delay1(1000);
+      }
+      viewFlag = 0;
     }
   }
 }
