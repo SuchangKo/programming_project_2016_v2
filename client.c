@@ -14,7 +14,7 @@
 #define  UP 1
 #define  DOWN 2
 #define  FLOOR_MAX 10
-#define  FLOOR_MIN -1
+#define  FLOOR_MIN 0
 
 /*
 * Protocol
@@ -129,7 +129,7 @@ int   main( int argc, char **argv)
                target_floor = current_floor + rand()%(FLOOR_MAX - current_floor) + 1;
             }
          }else if(direction == DOWN){
-            if(current_floor == FLOOR_MIN){
+            if(current_floor == FLOOR_MIN || current_floor == -1){
                printf("여기가 끝층이야 못내려가\n");
                break;
             }else{
